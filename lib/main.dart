@@ -111,8 +111,9 @@ class _HomeScreenState extends State<HomeScreen> {
         final responseData = jsonDecode(responseBody);
 
         String predictClass = responseData['class'];
+        double accuracy = responseData['confidence'];
 
-        String formattedResponse = "Classificação: $predictClass";
+        String formattedResponse = "Classificação: $predictClass\nPrecisão: ${accuracy.toStringAsFixed(2)}%";
 
         setState(() {
           _classification = formattedResponse;
