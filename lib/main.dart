@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io' show File; // Para evitar uso de Platform diretamente em web.
@@ -105,8 +106,16 @@ class _HomeScreenState extends State<HomeScreen> {
       if (response.statusCode == 200) {
         final responseBody = await response.stream.bytesToString();
         // print("Resposta do servidor: $responseBody");
+
+        // extraindo dados
+        final responseData = jsonDecode(responseBody);
+
+        String predictClass = responseData['class'];
+
+        String formattedResponse = "Classificação: $predictClass";
+
         setState(() {
-          _classification = 'Classificação: $responseBody';
+          _classification = formattedResponse;
         });
       } else {
         print("Erro do servidor: ${response.statusCode}");
