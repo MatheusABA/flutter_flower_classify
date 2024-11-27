@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io' show File; // Para evitar uso de Platform diretamente em web.
@@ -35,7 +34,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   File? _image; // Para Android/iOS
   XFile? _webImage; // Para Web/Desktop
-  String? _classification;  // Resultado da classificacao
+  String? _classification;  // Resultado da classificação
   bool _isLoading = false; // Para exibir feedback durante carregamento
   
   final ImagePicker _picker = ImagePicker();
@@ -75,8 +74,8 @@ class _HomeScreenState extends State<HomeScreen> {
       _isLoading = true;
     });
 
-    // Rota da api
-    String ip = '192.168.100.142';
+    // Rota da API
+    String ip = '192.168.100.142'; // Substitua com seu IP
     String port = '5000';
     String endpoint = '/classify';
 
@@ -86,25 +85,26 @@ class _HomeScreenState extends State<HomeScreen> {
         Uri.parse('http://$ip:$port$endpoint'),
       );
 
+      // Adiciona a imagem ao corpo da requisição
       if (kIsWeb && _webImage != null) {
         request.files.add(
           http.MultipartFile.fromBytes(
-            'image',
+            "file",
             await _webImage!.readAsBytes(),
             filename: 'image.jpg',
           ),
         );
       } else if (_image != null) {
         request.files.add(
-          await http.MultipartFile.fromPath('image', _image!.path),
+          await http.MultipartFile.fromPath('file', _image!.path),
         );
       }
-      
+
       final response = await request.send();
 
       if (response.statusCode == 200) {
         final responseBody = await response.stream.bytesToString();
-        print("Resposta do servidor: $responseBody");
+        // print("Resposta do servidor: $responseBody");
         setState(() {
           _classification = 'Classificação: $responseBody';
         });
@@ -118,14 +118,12 @@ class _HomeScreenState extends State<HomeScreen> {
       print("Erro ao enviar requisição: $e");
       setState(() {
         _classification = "Erro ao classificar a imagem";
-        
       });
-        
     }
 
-      setState(() {
-        _isLoading = false;
-      });
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
@@ -140,7 +138,6 @@ class _HomeScreenState extends State<HomeScreen> {
             if (!kIsWeb && _image != null) // Dispositivos móveis
               Image.file(_image!, height: 200)
             else if (kIsWeb && _webImage != null) // Web/Desktop
-              // Image.network(_webImage!.path, height: 200)
               FutureBuilder<Widget>(
                 future: _getImageForWeb(),
                 builder: (context, snapshot) {
@@ -189,7 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-    // Helper para exibir imagem na web
+  // Helper para exibir imagem na web
   Future<Widget> _getImageForWeb() async {
     final bytes = await _webImage!.readAsBytes();
     return Image.memory(bytes, height: 200);
