@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io' show File; // Para evitar uso de Platform diretamente em web.
@@ -34,8 +35,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   File? _image; // Para Android/iOS
   XFile? _webImage; // Para Web/Desktop
-  String? _classification;
-
+  String? _classification;  // Resultado da classificacao
+  bool _isLoading = false; // Para exibir feedback durante carregamento
+  
   final ImagePicker _picker = ImagePicker();
 
   // Verifica se o dispositivo é móvel
@@ -58,41 +60,72 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  
   // Função para enviar e classificar imagem
   Future<void> _classifyImage() async {
-    if (!kIsWeb && _image == null) return;
-    if (kIsWeb && _webImage == null) return;
-
-    final request = http.MultipartRequest(
-      'POST',
-      Uri.parse('colocar aqui depois o endereço da api'),
-    );
-
-    if (kIsWeb && _webImage != null) {
-      request.files.add(
-        http.MultipartFile.fromBytes(
-          'image',
-          await _webImage!.readAsBytes(),
-          filename: 'image.jpg',
-        ),
-      );
-    } else if (_image != null) {
-      request.files.add(
-        await http.MultipartFile.fromPath('image', _image!.path),
-      );
-    }
-
-    final response = await request.send();
-    if (response.statusCode == 200) {
-      final responseBody = await response.stream.bytesToString();
+    if ((!kIsWeb && _image == null) || (kIsWeb && _webImage == null)) {
       setState(() {
-        _classification = responseBody;
+        _classification = "Por favor, selecione uma imagem primeiro.";
       });
-    } else {
+      return;
+    }
+    
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Rota da api
+    String ip = '192.168.100.142';
+    String port = '5000';
+    String endpoint = '/classify';
+
+    try {
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('http://$ip:$port$endpoint'),
+      );
+
+      if (kIsWeb && _webImage != null) {
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'image',
+            await _webImage!.readAsBytes(),
+            filename: 'image.jpg',
+          ),
+        );
+      } else if (_image != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath('image', _image!.path),
+        );
+      }
+      
+      final response = await request.send();
+
+      if (response.statusCode == 200) {
+        final responseBody = await response.stream.bytesToString();
+        print("Resposta do servidor: $responseBody");
+        setState(() {
+          _classification = 'Classificação: $responseBody';
+        });
+      } else {
+        print("Erro do servidor: ${response.statusCode}");
+        setState(() {
+          _classification = "Erro ao classificar a imagem";
+        });
+      }
+    } catch (e) {
+      print("Erro ao enviar requisição: $e");
       setState(() {
         _classification = "Erro ao classificar a imagem";
+        
       });
+        
     }
+
+      setState(() {
+        _isLoading = false;
+      });
   }
 
   @override
@@ -107,7 +140,16 @@ class _HomeScreenState extends State<HomeScreen> {
             if (!kIsWeb && _image != null) // Dispositivos móveis
               Image.file(_image!, height: 200)
             else if (kIsWeb && _webImage != null) // Web/Desktop
-              Image.network(_webImage!.path, height: 200)
+              // Image.network(_webImage!.path, height: 200)
+              FutureBuilder<Widget>(
+                future: _getImageForWeb(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+                    return snapshot.data!;
+                  }
+                  return const CircularProgressIndicator();
+                },
+              )
             else
               const Text('Nenhuma imagem selecionada'),
             const SizedBox(height: 20),
@@ -115,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
             // Exibe o botão "Tirar Foto" apenas para dispositivos móveis
             if (_isMobile) ...[
               ElevatedButton(
-                onPressed: () => _pickImage(ImageSource.camera),
+                onPressed: _isLoading ? null : () => _pickImage(ImageSource.camera),
                 child: const Text('Tirar Foto'),
               ),
               const SizedBox(height: 10),
@@ -123,23 +165,33 @@ class _HomeScreenState extends State<HomeScreen> {
 
             // Exibe o botão "Escolher da Galeria" para todos os dispositivos
             ElevatedButton(
-              onPressed: () => _pickImage(ImageSource.gallery),
+              onPressed: _isLoading ? null : () => _pickImage(ImageSource.gallery),
               child: const Text('Escolher da Galeria'),
             ),
             const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: _classifyImage,
-              child: const Text('Classificar Imagem'),
-            ),
+
+            if (_isLoading)
+              const CircularProgressIndicator()
+            else
+              ElevatedButton(
+                onPressed: _classifyImage,
+                child: const Text('Classificar Imagem'),
+              ),
 
             // Exibe a classificação
             if (_classification != null) ...[
               const SizedBox(height: 20),
-              Text('Classificação: $_classification'),
+              Text('$_classification'),
             ],
           ],
         ),
       ),
     );
+  }
+
+    // Helper para exibir imagem na web
+  Future<Widget> _getImageForWeb() async {
+    final bytes = await _webImage!.readAsBytes();
+    return Image.memory(bytes, height: 200);
   }
 }
