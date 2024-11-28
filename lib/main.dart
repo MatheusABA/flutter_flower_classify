@@ -76,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     // Rota da API
-    String ip = '13.60.79.242'; // Substitua com seu IP
+    String ip = '51.21.131.14'; // Substitua com seu IP
     String port = '5000';
     String endpoint = '/classify';
 
