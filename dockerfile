@@ -1,13 +1,13 @@
 # Usar a imagem com Flutter e Dart atualizados
 FROM dart:stable
 
-#Instalar o Flutter manualmente
+# Instalar o Flutter manualmente
 RUN apt-get update && apt-get install -y \
     curl \
     git \
     unzip \
     xz-utils \
-    && curl -O https://storage.googleapis.com/download.flutter.io/flutter_linux_3.10.1-stable.tar.xz \
+    && curl -O https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.10.1-stable.tar.xz \
     && tar -xvJf flutter_linux_3.10.1-stable.tar.xz \
     && mv flutter /opt/flutter \
     && ln -s /opt/flutter/bin/flutter /usr/local/bin/flutter
