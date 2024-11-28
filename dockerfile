@@ -1,5 +1,5 @@
 # Usar a imagem com Flutter e Dart atualizados
-FROM cirrusci/flutter:main
+FROM google/dart-runtime
 
 
 # Configurar o diretório de trabalho
