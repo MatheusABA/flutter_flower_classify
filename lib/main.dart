@@ -83,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final request = http.MultipartRequest(
         'POST',
-        Uri.parse('https://$ip:$port$endpoint'),
+        Uri.parse('http://$ip:$port$endpoint'),
       );
 
       // Adiciona a imagem ao corpo da requisição
