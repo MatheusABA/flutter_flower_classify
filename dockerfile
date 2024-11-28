@@ -1,40 +1,53 @@
-# Install Operating system and dependencies
-FROM ubuntu:20.04
+# Base para instalação do Flutter
+FROM ubuntu:20.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update 
-RUN apt-get install -y curl git wget unzip libgconf-2-4 gdb libstdc++6 libglu1-mesa fonts-droid-fallback python3
-RUN apt-get clean
+# Instalar dependências e ferramentas necessárias
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    wget \
+    unzip \
+    libgconf-2-4 \
+    gdb \
+    libstdc++6 \
+    libglu1-mesa \
+    fonts-droid-fallback \
+    python3 \
+    && apt-get clean
 
-ENV DEBIAN_FRONTEND=dialog
+# Configurar variáveis para acesso aos recursos do Flutter
 ENV PUB_HOSTED_URL=https://pub.flutter-io.cn
 ENV FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn
 
-# download Flutter SDK from Flutter Github repo
+# Clonar o repositório do Flutter
 RUN git clone https://github.com/flutter/flutter.git /usr/local/flutter
 
-# Set flutter environment path
+# Adicionar o Flutter ao PATH
 ENV PATH="/usr/local/flutter/bin:/usr/local/flutter/bin/cache/dart-sdk/bin:${PATH}"
 
-# Run flutter doctor
+# Executar o Flutter Doctor para inicializar o cache
 RUN flutter doctor
 
-# Enable flutter web
-RUN flutter channel master
+# Usar o canal stable e habilitar suporte para web
+RUN flutter channel stable
 RUN flutter upgrade
 RUN flutter config --enable-web
 
-# Copy files to container and build
-RUN mkdir /app/
-COPY . /app/
-WORKDIR /app/
-RUN flutter build web
+# Copiar os arquivos do projeto e compilar para web
+WORKDIR /app
+COPY . .
+RUN flutter pub get && flutter build web
 
-# Record the exposed port
-EXPOSE 9000
+# Fase final: Servir os arquivos compilados com Nginx
+FROM nginx:alpine
 
-# make server startup script executable and start the web server
-RUN ["chmod", "+x", "/app/server/server.sh"]
+# Copiar os arquivos compilados para o diretório de conteúdo do Nginx
+COPY --from=builder /app/build/web /usr/share/nginx/html
 
-ENTRYPOINT [ "/app/server/server.sh"]
+# Expor a porta onde o Nginx servirá os arquivos
+EXPOSE 80
+
+# Iniciar o Nginx
+CMD ["nginx", "-g", "daemon off;"]
