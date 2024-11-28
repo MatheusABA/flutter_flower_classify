@@ -1,5 +1,5 @@
 # Usar a imagem com Flutter e Dart atualizados
-FROM dart:stable
+FROM flutter/flutter:stable
 
 
 # Configurar o diretório de trabalho
