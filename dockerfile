@@ -1,8 +1,9 @@
 # Usar a imagem base Flutter
 FROM cirrusci/flutter:stable
 
-# Atualizar o Dart SDK para a versão 3.5.4
-RUN flutter upgrade && \
+# Definir o canal do Flutter como "stable" e realizar o upgrade
+RUN flutter channel stable && \
+    flutter upgrade && \
     flutter doctor
 
 # Definir o diretório de trabalho
