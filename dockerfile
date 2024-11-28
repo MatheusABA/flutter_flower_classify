@@ -1,12 +1,15 @@
-# Usar uma imagem base leve do Ubuntu
+# Usar uma imagem base leve
 FROM ubuntu:20.04
 
-# Instalar dependências necessárias
+# Configurar o fuso horário sem prompts interativos
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
-    git wget unzip curl xz-utils zip libglu1-mesa clang cmake ninja-build pkg-config libgtk-3-dev && \
+    tzdata git wget unzip curl xz-utils zip libglu1-mesa clang cmake ninja-build pkg-config libgtk-3-dev && \
+    ln -fs /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime && \
+    dpkg-reconfigure --frontend noninteractive tzdata && \
     apt-get clean
 
-# Baixar e configurar o Flutter
+# Instalar o Flutter manualmente
 RUN git clone https://github.com/flutter/flutter.git /usr/local/flutter && \
     export PATH="$PATH:/usr/local/flutter/bin" && \
     /usr/local/flutter/bin/flutter channel stable && \
