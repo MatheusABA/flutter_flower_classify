@@ -1,14 +1,15 @@
-# Usar a imagem oficial do Flutter
-FROM cirrusci/flutter:stable
+# Usar a imagem com Flutter e Dart atualizados
+FROM ghcr.io/jamescraig/flutter-web:latest
 
 # Configurar o diretório de trabalho
 WORKDIR /app
 
-# Copiar os arquivos do frontend para o contêiner
+# Copiar os arquivos do projeto para o contêiner
 COPY . .
 
-# Compilar o frontend para a web
-RUN flutter build web
+# Instalar dependências do Flutter e compilar para web
+RUN flutter pub get && \
+    flutter build web
 
 # Usar uma imagem leve para servir os arquivos estáticos
 FROM nginx:alpine
