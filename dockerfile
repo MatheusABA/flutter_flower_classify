@@ -1,5 +1,5 @@
 # Usar a imagem com Flutter e Dart atualizados
-FROM google/dart-runtime
+FROM dart:stable
 
 
 # Configurar o diretório de trabalho
