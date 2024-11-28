@@ -1,13 +1,17 @@
-# Usar a imagem base Flutter
-FROM cirrusci/flutter:stable
+# Usar uma imagem base leve do Ubuntu
+FROM ubuntu:20.04
 
-# Sincronizar o repositório do Flutter e alternar para o canal 'stable'
-RUN git remote set-url origin https://github.com/flutter/flutter.git && \
-    git fetch origin stable && \
-    git reset --hard origin/stable && \
-    flutter channel stable && \
-    flutter upgrade && \
-    flutter doctor
+# Instalar dependências necessárias
+RUN apt-get update && apt-get install -y \
+    git wget unzip curl xz-utils zip libglu1-mesa clang cmake ninja-build pkg-config libgtk-3-dev && \
+    apt-get clean
+
+# Baixar e configurar o Flutter
+RUN git clone https://github.com/flutter/flutter.git /usr/local/flutter && \
+    export PATH="$PATH:/usr/local/flutter/bin" && \
+    /usr/local/flutter/bin/flutter channel stable && \
+    /usr/local/flutter/bin/flutter upgrade && \
+    /usr/local/flutter/bin/flutter doctor
 
 # Definir o diretório de trabalho
 WORKDIR /app
@@ -16,8 +20,8 @@ WORKDIR /app
 COPY . .
 
 # Instalar dependências do Flutter e compilar para a web
-RUN flutter pub get && \
-    flutter build web
+RUN /usr/local/flutter/bin/flutter pub get && \
+    /usr/local/flutter/bin/flutter build web
 
 # Usar Nginx para servir os arquivos compilados
 FROM nginx:alpine
