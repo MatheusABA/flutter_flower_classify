@@ -9,8 +9,7 @@ WORKDIR /app
 COPY . .
 
 # Instalar dependências do Flutter e compilar para web
-RUN flutter pub get && \
-    flutter build web
+RUN flutter pub get && flutter build web
 
 # Usar uma imagem leve para servir os arquivos estáticos
 FROM nginx:alpine
