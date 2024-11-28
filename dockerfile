@@ -1,37 +1,21 @@
-# Usar uma imagem base leve
-FROM ubuntu:20.04
+# Usar a imagem oficial do Flutter
+FROM cirrusci/flutter:stable
 
-# Configurar o fuso horário sem prompts interativos
-ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y \
-    tzdata git wget unzip curl xz-utils zip libglu1-mesa clang cmake ninja-build pkg-config libgtk-3-dev && \
-    ln -fs /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime && \
-    dpkg-reconfigure --frontend noninteractive tzdata && \
-    apt-get clean
-
-# Instalar o Flutter manualmente
-RUN git clone https://github.com/flutter/flutter.git /usr/local/flutter && \
-    export PATH="$PATH:/usr/local/flutter/bin" && \
-    /usr/local/flutter/bin/flutter channel stable && \
-    /usr/local/flutter/bin/flutter upgrade && \
-    /usr/local/flutter/bin/flutter doctor
-
-# Definir o diretório de trabalho
+# Configurar o diretório de trabalho
 WORKDIR /app
 
-# Copiar os arquivos do projeto para o contêiner
+# Copiar os arquivos do frontend para o contêiner
 COPY . .
 
-# Instalar dependências do Flutter e compilar para a web
-RUN /usr/local/flutter/bin/flutter pub get && \
-    /usr/local/flutter/bin/flutter build web
+# Compilar o frontend para a web
+RUN flutter build web
 
-# Usar Nginx para servir os arquivos compilados
+# Usar uma imagem leve para servir os arquivos estáticos
 FROM nginx:alpine
 COPY --from=0 /app/build/web /usr/share/nginx/html
 
-# Expor a porta do frontend
+# Expor a porta para o frontend
 EXPOSE 80
 
-# Comando para iniciar o servidor Nginx
+# Iniciar o Nginx para servir o frontend
 CMD ["nginx", "-g", "daemon off;"]
