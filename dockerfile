@@ -1,56 +1,40 @@
-# Base para instalação do Flutter
-FROM ubuntu:20.04-slim AS builder
+# Install Operating system and dependencies
+FROM ubuntu:20.04
 
-# Configurar o ambiente
-ENV DEBIAN_FRONTEND=noninteractive \
-    PUB_HOSTED_URL=https://pub.flutter-io.cn \
-    FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Instalar dependências e ferramentas necessárias
-RUN apt-get update && apt-get install -y \
-    curl \
-    git \
-    wget \
-    unzip \
-    libgconf-2-4 \
-    gdb \
-    libstdc++6 \
-    libglu1-mesa \
-    fonts-droid-fallback \
-    python3 \
-    && apt-get clean
+RUN apt-get update 
+RUN apt-get install -y curl git wget unzip libgconf-2-4 gdb libstdc++6 libglu1-mesa fonts-droid-fallback python3
+RUN apt-get clean
 
-# Clonar o repositório do Flutter
+ENV DEBIAN_FRONTEND=dialog
+ENV PUB_HOSTED_URL=https://pub.flutter-io.cn
+ENV FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn
+
+# download Flutter SDK from Flutter Github repo
 RUN git clone https://github.com/flutter/flutter.git /usr/local/flutter
 
-# Adicionar o Flutter ao PATH
+# Set flutter environment path
 ENV PATH="/usr/local/flutter/bin:/usr/local/flutter/bin/cache/dart-sdk/bin:${PATH}"
 
-# Executar o Flutter Doctor para inicializar o cache
+# Run flutter doctor
 RUN flutter doctor
 
-# Usar o canal stable e habilitar suporte para web
-RUN flutter channel stable && flutter upgrade && flutter config --enable-web
+# Enable flutter web
+RUN flutter channel master
+RUN flutter upgrade
+RUN flutter config --enable-web
 
-# Copiar os arquivos do projeto e compilar para web
-WORKDIR /app
-
-COPY pubspec.* ./
-
-RUN flutter pub get
-
-COPY . .
-
+# Copy files to container and build
+RUN mkdir /app/
+COPY . /app/
+WORKDIR /app/
 RUN flutter build web
 
-# Fase final: Servir os arquivos compilados com Nginx
-FROM nginx:alpine
+# Record the exposed port
+EXPOSE 9000
 
-# Copiar os arquivos compilados para o diretório de conteúdo do Nginx
-COPY --from=builder /app/build/web /usr/share/nginx/html
+# make server startup script executable and start the web server
+RUN ["chmod", "+x", "/app/server/server.sh"]
 
-# Expor a porta onde o Nginx servirá os arquivos
-EXPOSE 80
-
-# Iniciar o Nginx
-CMD ["nginx", "-g", "daemon off;"]
+ENTRYPOINT [ "/app/server/server.sh"]
