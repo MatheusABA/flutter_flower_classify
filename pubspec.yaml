@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^2.15.1
+  sdk: ^3.5.0
 
 # Lembrete
 # Assim como no NodeJS ou Python, aqui estao as dependencias do projeto

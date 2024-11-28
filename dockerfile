@@ -1,32 +1,40 @@
-# Usar a imagem com Flutter e Dart atualizados
-FROM dart:stable
+# Install Operating system and dependencies
+FROM ubuntu:20.04
 
-# Instalar o Flutter manualmente
-RUN apt-get update && apt-get install -y \
-    curl \
-    git \
-    unzip \
-    xz-utils \
-    && curl -O https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.10.1-stable.tar.xz \
-    && tar -xvJf flutter_linux_3.10.1-stable.tar.xz \
-    && mv flutter /opt/flutter \
-    && ln -s /opt/flutter/bin/flutter /usr/local/bin/flutter
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Configurar o diretório de trabalho
-WORKDIR /app
+RUN apt-get update 
+RUN apt-get install -y curl git wget unzip libgconf-2-4 gdb libstdc++6 libglu1-mesa fonts-droid-fallback python3
+RUN apt-get clean
 
-# Copiar os arquivos do projeto para o contêiner
-COPY . .
+ENV DEBIAN_FRONTEND=dialog
+ENV PUB_HOSTED_URL=https://pub.flutter-io.cn
+ENV FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn
 
-# Instalar dependências do Flutter e compilar para web
-RUN flutter pub get && flutter build web
+# download Flutter SDK from Flutter Github repo
+RUN git clone https://github.com/flutter/flutter.git /usr/local/flutter
 
-# Usar uma imagem leve para servir os arquivos estáticos
-FROM nginx:alpine
-COPY --from=0 /app/build/web /usr/share/nginx/html
+# Set flutter environment path
+ENV PATH="/usr/local/flutter/bin:/usr/local/flutter/bin/cache/dart-sdk/bin:${PATH}"
 
-# Expor a porta para o frontend
-EXPOSE 80
+# Run flutter doctor
+RUN flutter doctor
 
-# Iniciar o Nginx para servir o frontend
-CMD ["nginx", "-g", "daemon off;"]
+# Enable flutter web
+RUN flutter channel master
+RUN flutter upgrade
+RUN flutter config --enable-web
+
+# Copy files to container and build
+RUN mkdir /app/
+COPY . /app/
+WORKDIR /app/
+RUN flutter build web
+
+# Record the exposed port
+EXPOSE 9000
+
+# make server startup script executable and start the web server
+RUN ["chmod", "+x", "/app/server/server.sh"]
+
+ENTRYPOINT [ "/app/server/server.sh"]
