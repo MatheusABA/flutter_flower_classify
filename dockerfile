@@ -1,5 +1,6 @@
 # Usar a imagem com Flutter e Dart atualizados
-FROM ghcr.io/jamescraig/flutter-web:latest
+FROM cirrusci/flutter:main
+
 
 # Configurar o diretório de trabalho
 WORKDIR /app
