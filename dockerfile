@@ -1,21 +1,26 @@
-# Usar a imagem oficial do Flutter
+# Usar a imagem base Flutter
 FROM cirrusci/flutter:stable
 
-# Configurar o diretório de trabalho
+# Atualizar o Dart SDK para a versão 3.5.4
+RUN flutter upgrade && \
+    flutter doctor
+
+# Definir o diretório de trabalho
 WORKDIR /app
 
-# Copiar os arquivos do frontend para o contêiner
+# Copiar os arquivos do projeto para o contêiner
 COPY . .
 
-# Compilar o frontend para a web
-RUN flutter build web
+# Instalar as dependências do Flutter e construir para web
+RUN flutter pub get && \
+    flutter build web
 
-# Usar uma imagem leve para servir os arquivos estáticos
+# Usar Nginx para servir os arquivos compilados
 FROM nginx:alpine
 COPY --from=0 /app/build/web /usr/share/nginx/html
 
-# Expor a porta para o frontend
+# Expor a porta do frontend
 EXPOSE 80
 
-# Iniciar o Nginx para servir o frontend
+# Comando para iniciar o servidor Nginx
 CMD ["nginx", "-g", "daemon off;"]
