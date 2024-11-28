@@ -1,8 +1,11 @@
 # Usar a imagem base Flutter
 FROM cirrusci/flutter:stable
 
-# Definir o canal do Flutter como "stable" e realizar o upgrade
-RUN flutter channel stable && \
+# Sincronizar o repositório do Flutter e alternar para o canal 'stable'
+RUN git remote set-url origin https://github.com/flutter/flutter.git && \
+    git fetch origin stable && \
+    git reset --hard origin/stable && \
+    flutter channel stable && \
     flutter upgrade && \
     flutter doctor
 
@@ -12,7 +15,7 @@ WORKDIR /app
 # Copiar os arquivos do projeto para o contêiner
 COPY . .
 
-# Instalar as dependências do Flutter e construir para web
+# Instalar dependências do Flutter e compilar para a web
 RUN flutter pub get && \
     flutter build web
 
